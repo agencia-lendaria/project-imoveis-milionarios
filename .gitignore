@@ -22,4 +22,50 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Arquivos de documentação temporária (desenvolvimento)
+AUTH_CREDENTIALS.md
+CHANGE_PASSWORD_GUIDE.md
+COMANDOS_COMMIT.md
+CURSOR_ERRORS.md
+EXEMPLO_MELHORIAS_VISUAIS.MD
+GUIA_REVERSAO.md
+IMPLEMENTATION_GUIDE.md
+IMPLEMENTATION_MEMORY_ERRORS.md
+LOGIN_DESIGN_SPECIFICATION.md
+MEDIA_COMPONENTS_UPGRADE.md
+OPTIMIZATION_SUMMARY.md
+PLANNING.md
+RPC_FUNCTIONS_DEPLOYED.md
+TEST_MILANO_THEME.md
+TRANSFORMATION_CHECKLIST.md
+
+# Arquivos SQL temporários
+revert_database_changes.sql
+supabase_rpc_functions.sql
+teste_sender_principal.sql
+verificacao_rpc.sql
+
+# Logos antigos/temporários
+logo-lendario-v3.png
+logopipiolo.png
+L-Agencia-Lendaria-White-32.svg
+
+# Arquivos de backup
+*.backup
+src/utils/dateUtils.ts.backup
+
+# Arquivos de teste
+src/utils/testSupabase.ts
+
+# Build files
+favicon.ico
+logo-duomo.png
+# (manter apenas na pasta public/)
