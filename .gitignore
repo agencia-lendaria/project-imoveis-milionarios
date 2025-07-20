@@ -65,7 +65,6 @@ src/utils/dateUtils.ts.backup
 # Arquivos de teste
 src/utils/testSupabase.ts
 
-# Build files
-favicon.ico
-logo-duomo.png
-# (manter apenas na pasta public/)
+# Arquivos importantes da identidade visual (NÃO REMOVER)
+# favicon.ico - mantido na raiz do projeto
+# logo-duomo.png - mantido na raiz do projeto
