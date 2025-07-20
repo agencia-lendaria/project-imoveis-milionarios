@@ -1292,18 +1292,27 @@ const ChatViewerPage: React.FC = () => {
   };
 
   // FUNÇÃO PARA CRIAR NOVO VENDEDOR
-  const createNewSeller = async (name: string, role: string) => {
+  const createNewSeller = async (name: string, specialization: string) => {
     try {
+      // Obter o usuário atual para associar ao vendedor
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData.user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Dados para inserção com campos obrigatórios
+      let insertData = {
+        name: name.trim(),
+        specialization: specialization.trim(),
+        is_active: true,
+        status: 'active'
+      };
+
       // Criar vendedor no Supabase
       const { data, error } = await supabase
         .from('imoveis_milionarios_sdr_seller')
-        .insert([
-          {
-            name: name.trim(),
-            role: role.trim(),
-            is_active: true
-          }
-        ])
+        .insert([insertData])
         .select()
         .single();
 
@@ -1326,9 +1335,21 @@ const ChatViewerPage: React.FC = () => {
       localStorage.setItem('current-agent', JSON.stringify(newAgent));
       
       console.log('✅ Vendedor criado no Supabase:', newAgent);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro ao criar vendedor:', error);
-      alert('Erro ao criar vendedor. Tente novamente.');
+      
+      // Mensagem de erro mais específica
+      let errorMessage = 'Erro ao criar vendedor. Tente novamente.';
+      
+      if (error?.code === '42501') {
+        errorMessage = 'Erro de permissão: Você não tem autorização para criar vendedores. Entre em contato com o administrador.';
+      } else if (error?.message?.includes('row-level security')) {
+        errorMessage = 'Erro de segurança: Política de acesso à tabela impede a criação. Contate o administrador.';
+      } else if (error?.message?.includes('not authenticated')) {
+        errorMessage = 'Usuário não autenticado. Faça login novamente.';
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -1611,9 +1632,9 @@ const ChatViewerPage: React.FC = () => {
 
   const handleCreateNewSeller = useCallback(() => {
     const name = prompt('Digite seu nome:');
-    const role = prompt('Digite sua área de atuação (ex: Equipe Comercial, Gerência, etc.):');
-    if (name && role) {
-      createNewSeller(name, role);
+    const specialization = prompt('Digite sua equipe (ex: Equipe Comercial, Equipe CS, Gerência, Coordenação, etc.):');
+    if (name && specialization) {
+      createNewSeller(name, specialization);
       setAgentSearchTerm(''); // Limpar busca após criar
     }
   }, []);
