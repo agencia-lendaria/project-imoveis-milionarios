@@ -66,5 +66,5 @@ src/utils/dateUtils.ts.backup
 src/utils/testSupabase.ts
 
 # Arquivos importantes da identidade visual (NÃO REMOVER)
-# favicon.ico - mantido na raiz do projeto
-# logo-duomo.png - mantido na raiz do projeto
+# favicon.ico e logo-duomo.png - mantidos na raiz e em public/
+# Estes arquivos são essenciais para a identidade visual

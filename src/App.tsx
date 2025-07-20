@@ -1,16 +1,11 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import ChatViewerPage from './pages/ChatViewerPage';
-import { testSupabaseConnection } from './utils/testSupabase';
 
 function App() {
-  useEffect(() => {
-    // Test Supabase connection when the app starts
-    testSupabaseConnection();
-  }, []);
 
   return (
     <Router>
