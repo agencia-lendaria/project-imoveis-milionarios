@@ -34,9 +34,8 @@ interface RealEstateAgent {
 interface ReadStatus {
   agent_id: number;
   agent_name: string;
-  last_read_at: string;
-  read_count: number;
-  is_currently_viewing: boolean;
+  read_at: string;
+  last_read_message_id?: number;
 }
 
 interface ConversationReadInfo {
@@ -921,7 +920,7 @@ const ChatViewerPage: React.FC = () => {
       if (currentUserRead && otherReaders.length === 0) {
         return {
           icon: '✅',
-          status: `Lida por você às ${formatTime(currentUserRead.last_read_at)}`,
+          status: `Lida por você às ${formatTime(currentUserRead.read_at)}`,
           isUnread: false,
           className: 'text-green-600'
         };
@@ -929,12 +928,12 @@ const ChatViewerPage: React.FC = () => {
 
       if (otherReaders.length > 0) {
         const lastReader = otherReaders.sort((a, b) => 
-          new Date(b.last_read_at).getTime() - new Date(a.last_read_at).getTime()
+          new Date(b.read_at).getTime() - new Date(a.read_at).getTime()
         )[0];
         
         return {
           icon: '👥',
-          status: `Lida por ${lastReader.agent_name} às ${formatTime(lastReader.last_read_at)}`,
+          status: `Lida por ${lastReader.agent_name} às ${formatTime(lastReader.read_at)}`,
           isUnread: false,
           className: 'text-blue-600'
         };
@@ -1437,7 +1436,7 @@ const ChatViewerPage: React.FC = () => {
           console.log(`📦 Lote ${globalIndex + 1}/${batches.length}: ${batch.length} IDs`);
           
           const { data, error } = await supabase
-            .from('pipiolo_sdr_conversation_reads')
+            .from('imoveis_milionarios_conversation_reads')
             .select(`
               *,
               imoveis_milionarios_sdr_seller!inner(name)
@@ -1458,20 +1457,19 @@ const ChatViewerPage: React.FC = () => {
         // 5. PROCESSAR RESULTADOS E ATUALIZAR CACHE
         const currentBatchIds = currentBatches.flat();
         currentBatchIds.forEach(phoneId => {
-          const phoneReads = flatResults.filter(read => read.phone_id === phoneId);
+          const phoneReads = flatResults.filter(read => read.session_id === phoneId);
           
           const readBy: ReadStatus[] = phoneReads.map(read => ({
             agent_id: read.seller_id,
             agent_name: read.imoveis_milionarios_sdr_seller.name,
-            last_read_at: read.last_read_at,
-            read_count: read.read_count,
-            is_currently_viewing: read.is_currently_viewing
+            read_at: read.read_at,
+            last_read_message_id: read.last_read_message_id
           }));
 
           const currentUserRead = readBy.find(r => r.agent_id === currentAgent.id);
           const lastMessageTime = sessions.find(s => s.session_id === phoneId)?.last_message_date;
           const lastMessageDate = lastMessageTime ? new Date(lastMessageTime) : new Date(0);
-          const userLastReadDate = currentUserRead ? new Date(currentUserRead.last_read_at) : new Date(0);
+          const userLastReadDate = currentUserRead ? new Date(currentUserRead.read_at) : new Date(0);
           const isUnreadForCurrentUser = !currentUserRead || lastMessageDate > userLastReadDate;
 
           const conversationInfo: ConversationReadInfo = {
@@ -1531,15 +1529,14 @@ const ChatViewerPage: React.FC = () => {
     try {
       // Upsert no Supabase (inserir ou atualizar)
       const { data, error } = await supabase
-        .from('pipiolo_sdr_conversation_reads')
+        .from('imoveis_milionarios_conversation_reads')
         .upsert({
-          phone_id: phoneId,
+          session_id: phoneId,
           seller_id: currentAgent.id,
-          last_read_at: new Date().toISOString(),
-          read_count: 1,
-          is_currently_viewing: true
+          read_at: new Date().toISOString(),
+          last_read_message_id: null
         }, {
-          onConflict: 'phone_id,seller_id'
+          onConflict: 'session_id,seller_id'
         })
         .select(`
           *,
@@ -1563,9 +1560,8 @@ const ChatViewerPage: React.FC = () => {
           {
             agent_id: currentAgent.id,
             agent_name: currentAgent.name,
-            last_read_at: new Date().toISOString(),
-            read_count: 1,
-            is_currently_viewing: true
+            read_at: new Date().toISOString(),
+            last_read_message_id: null
           }
         ];
 
