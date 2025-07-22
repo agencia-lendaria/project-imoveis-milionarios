@@ -109,9 +109,6 @@ const ChatViewerPage: React.FC = () => {
   // Estados para métricas simples
   const [totalConversations, setTotalConversations] = useState(0);
   
-  // Estados para novas métricas
-  const [rejectedPostTrigger, setRejectedPostTrigger] = useState(0);
-  
   // Refs para controlar scroll
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const shouldScrollToBottomRef = useRef(true);
@@ -306,25 +303,6 @@ const ChatViewerPage: React.FC = () => {
     }
   );
 
-  // 🚀 HOOK OTIMIZADO: Buscar métricas aprimoradas do dashboard
-  const {
-    execute: fetchDashboardMetrics
-  } = useAsyncOperation(
-    async () => {
-      const metrics = await ChatService.getEnhancedDashboardMetrics();
-      return metrics;
-    },
-    {
-      onSuccess: (metrics) => {
-        setRejectedPostTrigger(metrics.rejected_post_trigger);
-        console.log('✅ Métricas aprimoradas do dashboard obtidas:', metrics);
-      },
-      onError: (error) => {
-        console.error('❌ Erro ao buscar métricas aprimoradas do dashboard:', error);
-        setRejectedPostTrigger(0);
-      }
-    }
-  );
 
   // 🚀 HOOK OTIMIZADO: Buscar conversas com lead info usando RPC
   const {
@@ -379,9 +357,6 @@ const ChatViewerPage: React.FC = () => {
       try {
         // Buscar senders disponíveis primeiro
         await fetchAvailableSenders();
-        
-        // Buscar métricas do dashboard
-        await fetchDashboardMetrics();
         
         // Buscar conversas com lead info
         await fetchSessionsWithLeadInfo();
@@ -1242,8 +1217,6 @@ const ChatViewerPage: React.FC = () => {
     switch (status) {
       case 'rejected':
         return 'bg-red-50 border-red-200 hover:bg-red-100 hover:border-red-300';
-      case 'rejected_post_trigger':
-        return 'bg-red-50 border-red-200 hover:bg-red-100 hover:border-red-300';
       case 'accepted':
         return 'bg-green-50 border-green-200 hover:bg-green-100 hover:border-green-300';
       case 'waiting_human':
@@ -1260,11 +1233,6 @@ const ChatViewerPage: React.FC = () => {
       case 'rejected':
         return {
           text: '🚫 Recusou Oferta',
-          className: 'bg-red-100 text-red-800 border-red-200'
-        };
-      case 'rejected_post_trigger':
-        return {
-          text: '🚫 Recusou Oferta Pós-Disparo',
           className: 'bg-red-100 text-red-800 border-red-200'
         };
       case 'accepted':
@@ -2007,18 +1975,6 @@ const ChatViewerPage: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
-                <X size={24} className="text-red-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-duomo-primary">Recusas Pós-Disparo</p>
-                <p className="text-2xl font-bold text-gray-900">{rejectedPostTrigger}</p>
-                <p className="text-xs text-gray-500">Ofertas rejeitadas hoje</p>
-              </div>
-            </div>
-          </div>
           
 
         </div>

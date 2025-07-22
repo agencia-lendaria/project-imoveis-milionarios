@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabaseClient';
+import { TABLE_NAMES, RPC_FUNCTIONS } from '../config/tables';
 import type { 
   ChatMessage, 
   ConversationWithLeadInfo, 
@@ -15,7 +16,7 @@ export class ChatService {
       
       // Tentar usar a função RPC primeiro
       const { data: rpcData, error: rpcError } = await supabase
-        .rpc('get_conversations_with_lead_info', {
+        .rpc(RPC_FUNCTIONS.GET_CONVERSATIONS_OVERVIEW, {
           sender_filter: senderFilter || null
         });
 
@@ -43,7 +44,7 @@ export class ChatService {
       
       // Construir query base
       let query = supabase
-        .from('imoveis_milionarios_chat_histories')
+        .from(TABLE_NAMES.CHAT_HISTORIES)
         .select('session_id, created_at, sender')
         .order('created_at', { ascending: false });
 
@@ -89,7 +90,7 @@ export class ChatService {
       if (uniqueSessions.length > 0) {
         const phoneIds = uniqueSessions.map(s => s.session_id);
         const { data: leadData, error: leadError } = await supabase
-          .from('imoveis_milionarios_lead_management')
+          .from(TABLE_NAMES.LEAD_MANAGEMENT)
           .select('phone_id, name, email, lead_scoring, crm_deal_stage_id, is_ai_enabled, lead_conversation_status, last_message_data, instance_name')
           .in('phone_id', phoneIds);
 
@@ -132,9 +133,11 @@ export class ChatService {
       
       // Tentar usar a função RPC primeiro
       const { data: rpcData, error: rpcError } = await supabase
-        .rpc('get_messages_by_session', {
-          session_id_param: sessionId,
-          sender_filter: senderFilter || null
+        .rpc(RPC_FUNCTIONS.GET_CHAT_MESSAGES_WITH_PAGINATION, {
+          p_session_id: sessionId,
+          p_sender_filter: senderFilter || null,
+          p_limit: 1000,
+          p_offset: 0
         });
 
       if (!rpcError && rpcData) {
@@ -146,7 +149,7 @@ export class ChatService {
       
       // Fallback: usar queries tradicionais
       let query = supabase
-        .from('imoveis_milionarios_chat_histories')
+        .from(TABLE_NAMES.CHAT_HISTORIES)
         .select('*')
         .eq('session_id', sessionId);
 
@@ -178,7 +181,7 @@ export class ChatService {
       
       // Tentar usar a função RPC primeiro
       const { data: rpcData, error: rpcError } = await supabase
-        .rpc('get_conversation_count_by_sender');
+        .rpc(RPC_FUNCTIONS.GET_CHAT_OVERVIEW);
 
       if (!rpcError && rpcData) {
         console.log('✅ Senders encontrados via RPC:', rpcData.length);
@@ -192,7 +195,7 @@ export class ChatService {
       
       // Fallback: usar queries tradicionais
       const { data, error } = await supabase
-        .from('imoveis_milionarios_chat_histories')
+        .from(TABLE_NAMES.CHAT_HISTORIES)
         .select('sender, session_id')
         .not('sender', 'is', null);
 
@@ -283,7 +286,7 @@ export class ChatService {
       
       // Fallback: calcular estatísticas manualmente
       const { data, error } = await supabase
-        .from('imoveis_milionarios_chat_histories')
+        .from(TABLE_NAMES.CHAT_HISTORIES)
         .select('session_id, sender, created_at');
 
       if (error) throw error;
@@ -307,52 +310,6 @@ export class ChatService {
     }
   }
 
-  /**
-   * Buscar métricas aprimoradas do dashboard
-   */
-  static async getEnhancedDashboardMetrics(): Promise<{
-    rejected_post_trigger: number;
-    conversion_rate_today: number;
-    conversions_last_7_days: number;
-  }> {
-    try {
-      console.log('🔄 Buscando métricas aprimoradas do dashboard...');
-      
-      const { data, error } = await supabase
-        .rpc('get_enhanced_dashboard_metrics');
-
-      if (error) throw error;
-
-      // Processar os dados retornados
-      const metrics = {
-        rejected_post_trigger: 0,
-        conversion_rate_today: 0,
-        conversions_last_7_days: 0
-      };
-
-      data?.forEach((item: any) => {
-        if (item.metric_name === 'rejected_post_trigger') {
-          metrics.rejected_post_trigger = Number(item.metric_value);
-        } else if (item.metric_name === 'conversion_rate_today') {
-          metrics.conversion_rate_today = Number(item.metric_value);
-        } else if (item.metric_name === 'conversions_last_7_days') {
-          metrics.conversions_last_7_days = Number(item.metric_value);
-        }
-      });
-
-      console.log('✅ Métricas aprimoradas obtidas:', metrics);
-      return metrics;
-    } catch (error) {
-      console.error('❌ Erro ao buscar métricas aprimoradas do dashboard:', error);
-      
-      // Fallback: retornar valores padrão
-      return {
-        rejected_post_trigger: 0,
-        conversion_rate_today: 0,
-        conversions_last_7_days: 0
-      };
-    }
-  }
 
   /**
    * Enviar mensagem para Evolution API
